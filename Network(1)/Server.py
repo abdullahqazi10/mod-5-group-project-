@@ -26,32 +26,32 @@ def accept_incoming_connections():
 
 def handle_client(client):  # Takes client socket as argument.
     try:
-      """Handles a single client connection."""
-      name = client.recv(BUFSIZ).decode("utf8")
-      request = 'Welcome %s!' %name
-      client.send(bytes(request, "utf8"))
-      #successfull connection
-      #connect to the requested host
-      target = socket(AF_INET, SOCK_STREAM)
-      if connect(client, target) == -1:
-          print("stopped exetution by client")
-          #send_to(bytes("{quit}", "utf8"), client)
-          client.close()
-          return
+        """Handles a single client connection."""
+        name = client.recv(BUFSIZ).decode("utf8")
+        request = 'Welcome %s!' %name
+        client.send(bytes(request, "utf8"))
+        #successfull connection
+        #connect to the requested host
+        target = socket(AF_INET, SOCK_STREAM)
+        if connect(client, target) == -1:
+            print("stopped exetution by client")
+            #send_to(bytes("{quit}", "utf8"), client)
+            client.close()
+            return
     except Exception as e:
-      print(e)
-      client.close()
-      return
+        print(e)
+        client.close()
+        return
     
     while True:
         msg = client.recv(BUFSIZ)
         if msg != bytes("{quit}", "utf8"):
             try:
-              print("caller " + str(msg))
-              send_to( msg, target)
+                print("caller " + str(msg))
+                send_to( msg, target)
             except Exception as e:
-              send_to(bytes("error", "utf8"), client)
-              print(e)
+                send_to(bytes("error", "utf8"), client)
+                print(e)
         else:
             send_to(bytes("{quit}", "utf8"), target)
             client.close()
@@ -77,16 +77,16 @@ def input_destination(client):
 
 def connect( caller, target):
   while 1:
-    try:
-        ADDR = input_destination(caller)
-        if ADDR == -1:
-            return -1
-        target.connect(ADDR)
-        start_new_thread( receive, (target, caller ))
-        return 1
-    except Exception as e:
-        print(e)
-        send_to(bytes("network unreachable", "utf8"), caller)
+        try:
+            ADDR = input_destination(caller)
+            if ADDR == -1:
+                return -1
+            target.connect(ADDR)
+            start_new_thread( receive, (target, caller ))
+            return 1
+        except Exception as e:
+            print(e)
+            send_to(bytes("network unreachable", "utf8"), caller)
 
 
 def receive(target, caller):
@@ -108,5 +108,8 @@ if __name__ == "__main__":
 
 while 1:
     pass
-
-SERVER.close()
+    
+import atexit
+@atexit.register
+def shutdown():
+    SERVER.close()
