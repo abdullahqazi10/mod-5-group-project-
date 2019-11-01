@@ -4,9 +4,7 @@ from socket import *
 from _thread import *
 import time
 
-clients = {}
-addresses = {}
-
+client_list = []
 HOST = ''
 PORT = 33000
 BUFSIZ = 1024
@@ -21,8 +19,9 @@ def accept_incoming_connections():
         print("%s:%s has connected." % client_address)
         client.send(bytes("Greetings from the cave!"+
                           "Now type your name and press enter!", "utf8"))
-        addresses[client] = client_address
         start_new_thread( handle_client, (client, ))
+        global client_list
+        client_list.append(client)
 
 def handle_client(client):  # Takes client socket as argument.
     try:
@@ -37,6 +36,7 @@ def handle_client(client):  # Takes client socket as argument.
             print("stopped exetution by client")
             #send_to(bytes("{quit}", "utf8"), client)
             client.close()
+            client_list.remove(client)
             return
     except Exception as e:
         print(e)
@@ -55,7 +55,6 @@ def handle_client(client):  # Takes client socket as argument.
         else:
             send_to(bytes("{quit}", "utf8"), target)
             client.close()
-            del clients[client]
             break
 
 def send_to( msg, socket):
@@ -82,6 +81,8 @@ def connect( caller, target):
             if ADDR == -1:
                 return -1
             target.connect(ADDR)
+            global client_list
+            client_list.add(target)
             start_new_thread( receive, (target, caller ))
             return 1
         except Exception as e:
@@ -95,11 +96,22 @@ def receive(target, caller):
         try:
             #Receive messages from other and send to caller
             msg = target.recv(BUFSIZ)
+            if msg.decode("utf8") == "{quit}" or str(msg) == "b''":
+                print("connection to target failed")
+                target.close()
+                client_list.remove(target)
             print("target " + str(msg))
             send_to( msg, caller)
         except OSError as e:  # Possibly client has left the chat.
             print(e)
             break
+
+def shutdown():
+    print("server shutdown")
+    SERVER.close()
+    for sock in client_list:
+        sock.close()
+    
 
 if __name__ == "__main__":
     SERVER.listen(5)  # Listens for 5 connections at max.
@@ -107,9 +119,11 @@ if __name__ == "__main__":
     start_new_thread(accept_incoming_connections, ())
 
 while 1:
-    pass
+    try:
+        pass
+    except KeyboardInterrupt as e:
+        print(e)
+        shutdown()
+        break
     
-import atexit
-@atexit.register
-def shutdown():
-    SERVER.close()
+
