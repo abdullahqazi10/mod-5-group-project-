@@ -19,29 +19,33 @@ def accept_con( ):
         print("%s:%s has connected." % client_address)
         client.send(bytes("hello", "utf8"))
         address = client_address
-        start_new_thread( handle_client, (client, ))
+        # start_new_thread( handle_client, (client, ))
+        handle_client(client)
         break
+
 
 def handle_client(client):  # Takes client socket as argument.
     #listener thread
     start_new_thread(readData, (client, ))
     receive(client)
+    
 
 def receive( socket):
     """Handles receiving of messages"""
     while True:
         try:
             msg = socket.recv(BUFSIZ).decode("utf8")
-            if (msg ==  "" or msg == "{quit}") and not(deact):
+            if (msg ==  "" or msg == "{quit}"):# and #not(deact):
               print("other disconnected")
               disconnect(socket)
               break
-            elif deact:
-              break
+            # elif deact:
+            #   break
             print(msg)
         except OSError:  # Possibly other has left the chat.
             print("receive(): disconnected error")
             break
+
 
 def send( msg, socket):
     socket.send(bytes(msg, "utf8"))
@@ -90,7 +94,8 @@ while 1:
   elif choice == "2":
       SERVER.bind(ADDR)
       SERVER.listen(1)
-      start_new_thread( accept_con, ())
+      # start_new_thread( accept_con, ())
+      accept_con()
   elif choice == "3":
      break
 
