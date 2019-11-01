@@ -25,18 +25,24 @@ def accept_incoming_connections():
         start_new_thread( handle_client, (client, ))
 
 def handle_client(client):  # Takes client socket as argument.
-    """Handles a single client connection."""
-    name = client.recv(BUFSIZ).decode("utf8")
-    request = 'Welcome %s! please enter destination IP' % name
-    client.send(bytes(request, "utf8"))
-    ipadd = client.recv(BUFSIZ).decode("utf8")
-    request = 'please enter destination PORT'
-    client.send(bytes(request, "utf8"))
-    portadd = int(client.recv(BUFSIZ).decode("utf8"))
-    print(ipadd + ":" + str(portadd));
-    #connect to the requested host
-    target = socket(AF_INET, SOCK_STREAM)
-    start_new_thread( connect,  (ipadd, portadd, client, target))
+    try:
+      """Handles a single client connection."""
+      name = client.recv(BUFSIZ).decode("utf8")
+      request = 'Welcome %s!' %name
+      client.send(bytes(request, "utf8"))
+      #successfull connection
+      #connect to the requested host
+      target = socket(AF_INET, SOCK_STREAM)
+      if connect(client, target) == -1:
+          print("stopped exetution by client")
+          #send_to(bytes("{quit}", "utf8"), client)
+          client.close()
+          return
+    except Exception as e:
+      print(e)
+      client.close()
+      return
+    
     while True:
         msg = client.recv(BUFSIZ)
         if msg != bytes("{quit}", "utf8"):
@@ -55,26 +61,33 @@ def handle_client(client):  # Takes client socket as argument.
 def send_to( msg, socket):
     socket.send(msg)
 
-"""
-def send_to_init(msg):  # prefix is for name identification.
-    for sock in clients:
-        sock.send(msg)
+def input_destination(client):
+    request = 'please enter destination IP'
+    client.send(bytes(request, "utf8"))
+    ipadd = client.recv(BUFSIZ).decode("utf8")
+    print(ipadd)
+    if ipadd == "{quit}":
+        print("stop")
+        return -1
+    request = 'please enter destination PORT'
+    client.send(bytes(request, "utf8"))
+    portadd = int(client.recv(BUFSIZ).decode("utf8"))
+    print(ipadd + ":" + str(portadd))
+    return (ipadd, portadd)
 
-def send_to_other( msg):
-    client_socket.send(msg)
+def connect( caller, target):
+  while 1:
+    try:
+        ADDR = input_destination(caller)
+        if ADDR == -1:
+            return -1
+        target.connect(ADDR)
+        start_new_thread( receive, (target, caller ))
+        return 1
+    except Exception as e:
+        print(e)
+        send_to(bytes("network unreachable", "utf8"), caller)
 
-client_socket=0
-"""
-
-def connect( HOST, PORT, caller, target):
-  ADDR = (HOST, PORT)
-  #client_socket  = socket(AF_INET, SOCK_STREAM)
-  #client_socket.connect(ADDR)
-  target.connect(ADDR)
-  try:
-    start_new_thread( receive, (target, caller ))
-  except Exception as e:
-    print(e)
 
 def receive(target, caller):
     """Handles receiving of messages."""
