@@ -56,23 +56,30 @@ def disconnect( socket):
     socket.close()
 
 def connect(target):
-    HOST = input('Enter server IP: ')
-    PORT = input('Enter server port: ')
-    if not PORT:
-        PORT = 33000  # Default value.
-    else:
-        PORT = int(PORT)
-    BUFSIZ = 1024
-    ADDR = (HOST, PORT)
-    target = socket(AF_INET, SOCK_STREAM)
-    target.connect(ADDR)
-    try:
-        #start reading in seperate thread
-        start_new_thread( receive, (target, ))
-    except Exception as e:
-        print(e)
-    #start writing in this thread
-    readData(target)
+    going = 1
+    while going:
+        HOST = input('Enter server IP: ')
+        PORT = input('Enter server port: ')
+        if not PORT:
+            PORT = 33000  # Default value.
+        else:
+            PORT = int(PORT)
+        BUFSIZ = 1024
+        ADDR = (HOST, PORT)
+        target = socket(AF_INET, SOCK_STREAM)
+        try:
+            target.connect(ADDR)
+        except OSError:
+            print("network not accepted, try another")
+            continue
+        try:
+            #start reading in seperate thread
+            start_new_thread( receive, (target, ))
+        except Exception as e:
+            print(e)
+        #start writing in this thread
+        going = 0
+        readData(target)
 
 def readData(client):
     while 1:

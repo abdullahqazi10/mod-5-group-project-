@@ -19,3 +19,5 @@ caller should then add IP of HIS server, port is always 33000
 caller should then add IP of OTHER server, port is always 33000
 caller enters name again (i think)
 caller should then add IP of destination pi, port is always 33000
+
+at any point you can shut down using typing {quit} on client

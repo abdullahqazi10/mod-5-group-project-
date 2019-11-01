@@ -17,8 +17,7 @@ def accept_incoming_connections():
     while True:
         client, client_address = SERVER.accept()
         print("%s:%s has connected." % client_address)
-        client.send(bytes("Greetings from the cave!"+
-                          "Now type your name and press enter!", "utf8"))
+        client.send(bytes("You are connected to the server", "utf8"))
         start_new_thread( handle_client, (client, ))
         global client_list
         client_list.append(client)
@@ -26,9 +25,6 @@ def accept_incoming_connections():
 def handle_client(client):  # Takes client socket as argument.
     try:
         """Handles a single client connection."""
-        name = client.recv(BUFSIZ).decode("utf8")
-        request = 'Welcome %s!' %name
-        client.send(bytes(request, "utf8"))
         #successfull connection
         #connect to the requested host
         target = socket(AF_INET, SOCK_STREAM)
@@ -61,21 +57,20 @@ def send_to( msg, socket):
     socket.send(msg)
 
 def input_destination(client):
-    request = 'please enter destination IP'
+    request = 'please enter destination IP or next server ip'
     client.send(bytes(request, "utf8"))
     ipadd = client.recv(BUFSIZ).decode("utf8")
-    print(ipadd)
     if ipadd == "{quit}":
         print("stop")
         return -1
     request = 'please enter destination PORT'
     client.send(bytes(request, "utf8"))
     portadd = int(client.recv(BUFSIZ).decode("utf8"))
-    print(ipadd + ":" + str(portadd))
+    print("connect to  " + ipadd + ":" + str(portadd))
     return (ipadd, portadd)
 
 def connect( caller, target):
-  while 1:
+    while 1:
         try:
             ADDR = input_destination(caller)
             if ADDR == -1:
