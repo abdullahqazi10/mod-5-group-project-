@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
 while 1:
     try:
-        pass
+        input("")
     except KeyboardInterrupt as e:
         print(e)
         shutdown()
