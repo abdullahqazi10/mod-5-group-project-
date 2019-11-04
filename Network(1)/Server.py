@@ -77,7 +77,7 @@ def connect( caller, target):
                 return -1
             target.connect(ADDR)
             global client_list
-            client_list.add(target)
+            client_list.append(target)
             start_new_thread( receive, (target, caller ))
             return 1
         except Exception as e:
@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
 while 1:
     try:
-        input("")
+        pass
     except KeyboardInterrupt as e:
         print(e)
         shutdown()

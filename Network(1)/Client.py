@@ -23,15 +23,15 @@ def accept_con( ):
         handle_client(client)
         break
 
-
-def handle_client(client):  # Takes client socket as argument.
-    #listener thread
+""" start reading from connection and reading from (cmd) input"""
+def handle_client(client):
+    #listens to connection in parallel thread
     start_new_thread(readData, (client, ))
+    #reads input
     receive(client)
     
-
+""" start listening to socket indefinitely, untill quit or empty"""
 def receive( socket):
-    """Handles receiving of messages"""
     while True:
         try:
             msg = socket.recv(BUFSIZ).decode("utf8")
@@ -46,7 +46,7 @@ def receive( socket):
             print("receive(): disconnected error")
             break
 
-
+""" send message on socket"""
 def send( msg, socket):
     socket.send(bytes(msg, "utf8"))
     if msg == "{quit}":
@@ -55,6 +55,7 @@ def send( msg, socket):
 def disconnect( socket):
     socket.close()
 
+""" connect to target IP, keeps going till connected"""
 def connect(target):
     going = 1
     while going:
@@ -81,30 +82,39 @@ def connect(target):
         going = 0
         readData(target)
 
+""" read imput from commandline"""
 def readData(client):
     while 1:
-        val = input(">")
-        send(val, client)
-        if val == "{quit}":
-            global deact
-            deact=1
-            print("disconnecting...")
+        try:
+            val = input(">")
+            send(val, client)
+            if val == "{quit}":
+                global deact
+                deact=1
+                print("disconnecting...")
+                disconnect(client)
+                break
+        except KeyboardInterrupt:
+            send("{quit}", client)
             disconnect(client)
             break
     print("disconnected")
-
+""" main thread, sets client to calling or recieving"""
 while 1:
-    choice = input("what to do? 1=connect, 2=listen, 3=die")
-    if choice == "1":
-        target=0
-        connect(target)
-    elif choice == "2":
-        SERVER.bind(ADDR)
-        SERVER.listen(1)
-        # start_new_thread( accept_con, ())
-        accept_con()
-    elif choice == "3":
+    try:
+        choice = input("what to do? 1=connect, 2=listen, 3=die")
+        if choice == "1":
+            target=0
+            connect(target)
+        elif choice == "2":
+            SERVER.bind(ADDR)
+            SERVER.listen(1)
+            # start_new_thread( accept_con, ())
+            accept_con()
+        elif choice == "3":
+            break
+    except KeyboardInterrupt:
+        print("Shutting down")
         break
-
 while 1:
     pass
