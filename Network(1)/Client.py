@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from socket import AF_INET, socket, SOCK_STREAM
 from _thread import *
+import sys
 
 HOST = ''
 PORT = 33000
@@ -10,13 +11,22 @@ SERVER = socket(AF_INET, SOCK_STREAM)
 address = 0
 deact = 0
 
+output_file = open("output.h264", 'wb')
+
+def server_output( msg):
+    print(msg)
+
+def append_file( msg):
+    output_file.write(msg)
+    output_file.flush()
+
 def accept_con( ):
     #allows for exactly one connection
-    print("listening")
+    server_output("listening")
     while True:
         global address, caller
         client, client_address = SERVER.accept()
-        print("%s:%s has connected." % client_address)
+        server_output("%s:%s has connected." % client_address)
         client.send(bytes("hello", "utf8"))
         address = client_address
         # start_new_thread( handle_client, (client, ))
@@ -34,17 +44,25 @@ def handle_client(client):
 def receive( socket):
     while True:
         try:
-            msg = socket.recv(BUFSIZ).decode("utf8")
-            if (msg ==  "" or msg == "{quit}"):# and #not(deact):
-                print("other disconnected")
-                disconnect(socket)
-                break
-            # elif deact:
-            #     break
-            print(msg)
-        except OSError:  # Possibly other has left the chat.
-            print("receive(): disconnected error")
+            msg = socket.recv(BUFSIZ)
+            if str(msg)[:5] == "b'SYS":
+                msg = msg.decode("utf8")
+                server_output(msg[3:])
+            else:
+                append_file(msg)
+                #msg = msg.decode("utf8")
+                if (msg ==  "" or msg == "{quit}"):# and #not(deact):
+                    server_output("other disconnected")
+                    disconnect(socket)
+                    break
+                # elif deact:
+                #     break
+                #server_output(msg)
+        except OSError as e:  # Possibly other has left the chat.
+            server_output("receive(): disconnected error")
+            print(e)
             break
+    output_file.close()
 
 """ send message on socket"""
 def send( msg, socket):
@@ -71,7 +89,7 @@ def connect(target):
         try:
             target.connect(ADDR)
         except OSError:
-            print("network not accepted, try another")
+            server_output("network not accepted, try another")
             continue
         try:
             #start reading in seperate thread
@@ -91,14 +109,14 @@ def readData(client):
             if val == "{quit}":
                 global deact
                 deact=1
-                print("disconnecting...")
+                server_output("disconnecting...")
                 disconnect(client)
                 break
         except KeyboardInterrupt:
             send("{quit}", client)
             disconnect(client)
             break
-    print("disconnected")
+    server_output("disconnected")
 """ main thread, sets client to calling or recieving"""
 while 1:
     try:
@@ -114,7 +132,7 @@ while 1:
         elif choice == "3":
             break
     except KeyboardInterrupt:
-        print("Shutting down")
-        break
+        server_output("Shutting down")
+        sys.exit()
 while 1:
     pass

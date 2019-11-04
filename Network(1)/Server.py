@@ -17,7 +17,7 @@ def accept_incoming_connections():
     while True:
         client, client_address = SERVER.accept()
         print("%s:%s has connected." % client_address)
-        client.send(bytes("You are connected to the server", "utf8"))
+        client.send(bytes("SYSYou are connected to the server", "utf8"))
         start_new_thread( handle_client, (client, ))
         global client_list
         client_list.append(client)
@@ -30,7 +30,6 @@ def handle_client(client):  # Takes client socket as argument.
         target = socket(AF_INET, SOCK_STREAM)
         if connect(client, target) == -1:
             print("stopped exetution by client")
-            #send_to(bytes("{quit}", "utf8"), client)
             client.close()
             client_list.remove(client)
             return
@@ -57,13 +56,13 @@ def send_to( msg, socket):
     socket.send(msg)
 
 def input_destination(client):
-    request = 'please enter destination IP or next server ip'
+    request = 'SYSplease enter destination IP or next server ip'
     client.send(bytes(request, "utf8"))
     ipadd = client.recv(BUFSIZ).decode("utf8")
     if ipadd == "{quit}":
         print("stop")
         return -1
-    request = 'please enter destination PORT'
+    request = 'SYSplease enter destination PORT'
     client.send(bytes(request, "utf8"))
     portadd = int(client.recv(BUFSIZ).decode("utf8"))
     print("connect to  " + ipadd + ":" + str(portadd))
