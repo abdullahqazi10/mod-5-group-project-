@@ -11,13 +11,11 @@
 #############################################################################################################
 
 
-# Dieser Code nutzt die ADS1115 und die I2C Python Library fuer den Raspberry Pi
-# Diese ist unter folgendem Link unter der BSD Lizenz veroeffentlicht
+# This code uses the ADS1115 and the I2C Python library for the Raspberry Pi
+# This is under the following link under the BSD license published
 # [https://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code]
 from Adafruit_ADS1x15 import ADS1x15
 from time import sleep
-
-# Weitere benoetigte Module werden importiert und eingerichtet
 import time, signal, sys, os
 import sounddevice as sd
 import numpy as np
@@ -26,20 +24,22 @@ import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-# Benutzte Variablen werden initialisiert
-delayTime = 0.001# in Sekunden
 
-# Adresszuweisung ADS1x15 ADC
+# Used variables are initialized
+delayTime = 0.001
+i=0# in Secs
+
+# Adress of ADS1x15 ADC
 ADS1115 = 0x01  # 16-bit
 
-# Verstaerkung (Gain) wird ausgewaehlt
+# gain of analog signal
 gain = 4096  # +/- 4.096V
 # gain = 2048  # +/- 2.048V
 # gain = 1024  # +/- 1.024V
 # gain = 512   # +/- 0.512V
 # gain = 256   # +/- 0.256V
 
-# Abtasterate des ADC (SampleRate) wird ausgewaehlt
+# Sampling rate of the ADC (SampleRate) is selected
 #sps = 8    # 8 Samples pro Sekunde
 # sps = 16   # 16 Samples pro Sekunde
 # sps = 32   # 32 Samples pro Sekunde
@@ -49,35 +49,34 @@ gain = 4096  # +/- 4.096V
 # sps = 475  # 475 Samples pro Sekunde
 sps = 860  # 860 Samples pro Sekunde
 
-# ADC-Channel (1-4) wird ausgewaehlt
+# ADC-Channel 
 adc_channel_0 = 0    # Channel 0
-adc_channel_1 = 1    # Channel 1
-adc_channel_2 = 2    # Channel 2
-adc_channel_3 = 3    # Channel 3
 
-# Hier wird der ADC initialisiert - beim KY-053 verwendeten ADC handelt es sich um einen ADS1115 Chipsatz
+# Here the ADC is initialized - the ADC used in the KY-053 is an ADS1115 chipset
 adc = ADS1x15(ic=ADS1115)
 
 Button_PIN = 24
 GPIO.setup(Button_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 a=np.empty((324608,2),dtype='float32')
-i=0
+
 
 #############################################################################################################
 
+
 # ########
-# Hauptprogrammschleife
+# Main program loop
 # ########
-# Das Programm liest die aktuellen Werte der Eingang-Pins
-# und gibt diese in der Konsole aus
+# The program reads the current values ​​of the input pins
+# and print it in the console
 
 try:
         while True:
-                #Aktuelle Werte werden aufgenommen
+             
+#Current values ​​are recorded
                 adc0 = adc.readADCSingleEnded(adc_channel_0, gain, sps)
               
-                # Ausgabe auf die Konsole
-                print ("Messwert Channel 0:", adc0, "mV ")
+                # print values to console
+                print ("Channel 0:", adc0, "mV ")
 		a[i]=adc0/1000  #save the values in a numpy arrat
 		i=i+1		
                 if i==324608: 
