@@ -6,7 +6,7 @@ import time
 
 HOST = ''
 PORT = 33000
-BUFSIZ = 1024
+BUFSIZ = 4096
 ADDR = (HOST, PORT)
 SERVER = socket(AF_INET, SOCK_STREAM)
 address = 0
@@ -83,6 +83,25 @@ def connect(target):
   readData(target)
 
 def readData(client):
+    while 1:
+        try:
+            val = input(">")
+            send(val, client)
+            if val == "{quit}":
+                global deact
+                deact=1
+                server_output("disconnecting...")
+                disconnect(client)
+                break
+            elif val = "CAMERA":
+                break
+        except KeyboardInterrupt:
+            send("{quit}", client)
+            disconnect(client)
+            break
+    print("camera start")
+
+      # print("disconnected")
     camera=picamera.PiCamera()
     camera.resolution = (640, 480)
     camera.start_preview()
@@ -90,19 +109,7 @@ def readData(client):
     camera.start_recording(connection, format='h264', quality=23)
     while camera.recording:
          pass
-      # camera.wait_recording(30)
-
-        # val = input(">")
-        # camera.wait_recording(30)
-        # send(val, client)
-        # if val == "{quit}":
-        #   global deact
-        #   deact=1
-        #   print("disconnecting...")
-        #   disconnect(client)
-        #   break
-
-      # print("disconnected")
+      
 
 
 

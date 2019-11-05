@@ -2,6 +2,8 @@
 from socket import AF_INET, socket, SOCK_STREAM
 from _thread import *
 import sys
+sys.path.append('/view')
+from view.ViewTUI import *
 
 HOST = ''
 PORT = 33000
@@ -11,14 +13,11 @@ SERVER = socket(AF_INET, SOCK_STREAM)
 address = 0
 deact = 0
 
-output_file = open("output.h264", 'wb')
-
 def server_output( msg):
-    print(msg)
-
-def append_file( msg):
-    output_file.write(msg)
-    output_file.flush()
+    f_output_server(msg)
+    
+def client_output( msg):
+    f_output_client(msg)
 
 def accept_con( ):
     #allows for exactly one connection
@@ -40,16 +39,6 @@ def handle_client(client):
     #reads input
     receive(client)
 
-def file_reader( target):
-    f = open('output.h264','rb')
-    print('Sending...')
-    l = f.read(1024)
-    while (l):
-        print 'Sending...'
-        target.send(l)
-        l = f.read(1024)
-    f.close()
-
 """ start listening to socket indefinitely, untill quit or empty"""
 def receive( socket):
     while True:
@@ -66,12 +55,12 @@ def receive( socket):
                 #server_output(msg)
                 pass
             else:
-                append_file(msg)
+                #append_file(msg)
+                client_output(msg)
         except OSError as e:  # Possibly other has left the chat.
             server_output("receive(): disconnected error")
             print(e)
             break
-    output_file.close()
 
 """ send message on socket"""
 def send( msg, socket):
@@ -86,8 +75,8 @@ def disconnect( socket):
 def connect(target):
     going = 1
     while going:
-        HOST = input('Enter server IP: ')
-        PORT = input('Enter server port: ')
+        HOST = f_input('Enter server IP: ')
+        PORT = f_input('Enter server port: ')
         if not PORT:
             PORT = 33000  # Default value.
         else:
@@ -114,7 +103,7 @@ def readData(client):
   if 0:
     while 1:
         try:
-            val = input(">")
+            val = f_input(">")
             send(val, client)
             if val == "{quit}":
                 global deact
@@ -134,7 +123,7 @@ def readData(client):
 """ main thread, sets client to calling or recieving"""
 while 1:
     try:
-        choice = input("what to do? 1=connect, 2=listen, 3=die")
+        choice = f_input("what to do? 1=connect, 2=listen, 3=die")
         if choice == "1":
             target=0
             connect(target)
