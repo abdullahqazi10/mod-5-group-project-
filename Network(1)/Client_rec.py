@@ -2,6 +2,10 @@
 from socket import AF_INET, socket, SOCK_STREAM
 from _thread import *
 import sys
+import cv2
+import pickle
+import numpy as np
+import struct 
 
 HOST = ''
 PORT = 33000
@@ -19,6 +23,27 @@ def server_output( msg):
 def append_file( msg):
     output_file.write(msg)
     output_file.flush()
+
+def print_vid( client):
+    data = b''
+    payload_size = struct.calcsize("L") 
+    while True:
+        while len(data) < payload_size:
+            data += client.recv(4096)
+        packed_msg_size = data[:payload_size]
+        data = data[payload_size:]
+        msg_size = struct.unpack("L", packed_msg_size)[0]
+        while len(data) < msg_size:
+            data += conn.recv(4096)
+        frame_data = data[:msg_size]
+        data = data[msg_size:]
+        ###
+
+        frame=pickle.loads(frame_data)
+        print(frame)
+        cv2.imshow('frame',frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 def accept_con( ):
     #allows for exactly one connection
@@ -40,24 +65,9 @@ def handle_client(client):
     #reads input
     receive(client)
 
-def file_reader( target):
-    f = open('output.h264','rb+')
-    print(f.tell())
-    f.seek(0)
-    print('Sending...')
-    try:
-        l = f.read(1024)
-        print(l);
-        while (l):
-            print('Sending...')
-            target.send(l)
-            l = f.read(1024)
-        f.close()
-    except Exceptin as e:
-        print(e)
-
 """ start listening to socket indefinitely, untill quit or empty"""
 def receive( socket):
+  if (0):
     while True:
         try:
             msg = socket.recv(BUFSIZ)
@@ -77,7 +87,8 @@ def receive( socket):
             server_output("receive(): disconnected error")
             print(e)
             break
-    output_file.close()
+  else:
+    print_vid( socket)
 
 """ send message on socket"""
 def send( msg, socket):
@@ -117,7 +128,6 @@ def connect(target):
 
 """ read imput from commandline"""
 def readData(client):
-  if 0:
     while 1:
         try:
             val = input(">")
@@ -134,8 +144,6 @@ def readData(client):
             break
     server_output("disconnected")
     sys.exit()
-  else:
-    file_reader(client)
     
 """ main thread, sets client to calling or recieving"""
 while 1:
