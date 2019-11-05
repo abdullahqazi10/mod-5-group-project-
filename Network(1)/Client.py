@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-from socket import AF_INET, socket, SOCK_STREAM
+from socket import AF_INET, socket, SOCK_STREAM, gethostname, gethostbyname
 from _thread import *
 import sys
-from view.ViewTUI import *
+import view.ViewTUI as ui
 
+GUI = 0
+TUI = 1
 HOST = ''
 PORT = 33000
 BUFSIZ = 1024
@@ -14,13 +16,13 @@ SERVER = socket(AF_INET, SOCK_STREAM)
 handle messages starting with 'SYS'
 """
 def server_output( msg):
-    f_output_server(msg)
+    ui.f_output_server(msg)
 
 """
-handle chat messages
+handle messages starting with 'MSG'
 """  
 def client_output( msg):
-    f_output_client(msg)
+    ui.f_output_client(msg)
 
 """
 listen to certain port for 1 connection
@@ -31,7 +33,7 @@ def accept_con( ):
     while True:
         client, client_address = SERVER.accept()
         server_output("%s:%s has connected." % client_address)
-        client.send(bytes("hello", "utf8"))
+        client.send(bytes("SYSyou are connected to " + gethostname(), "utf8"))
         handle_client(client)
         break
 
@@ -59,13 +61,17 @@ def receive( socket):
                     server_output("other disconnected, ^C to return to menu")
                     disconnect(socket)
                     break
-            elif str(msg)[:5] == "b'MSG'":
-                #server_output(msg)
+            elif msg.decode("utf8")[:3] == "MSG":
+                client_output(msg.decode("utf8")[3:])
                 pass
             else:
                 #append_file(msg)
-                if (msg != "{quit}"):
-                    client_output(msg)
+                if (str(msg) != "b'{quit}'"):
+                    client_output(msg.decode("utf8"))
+                else:
+                    server_output("other disconnected")
+                    disconnect(socket)
+                    break
         except OSError as e:  # Possibly other has left the chat.
             server_output("receive(): disconnected error")
             print(e)
@@ -88,8 +94,8 @@ connect to target IP, keeps going till connected
 def connect(target):
     going = 1
     while going:
-        HOST = f_input('Enter server IP: ')
-        PORT = f_input('Enter server port: ')
+        HOST = ui.f_input('Enter server IP: ')
+        PORT = ui.f_input('Enter server port: ')
         if not PORT:
             PORT = 33000  # Default value.
         else:
@@ -112,34 +118,69 @@ def connect(target):
         readData(target)
 
 """
+let GUI connect
+"""
+def connect2(addr):
+    target = socket(AF_INET, SOCK_STREAM)
+    try:
+        target.connect(addr)
+    except OSError:
+        server_output("network not accepted, try another")
+        return -1
+    try:
+        #start reading in seperate thread
+        start_new_thread( receive, (target, ))
+    except Exception as e:
+        print(e)
+        return -1
+    readData(target)
+    start_new_thread(receive, (target, ))
+    return 1
+
+"""
 read imput from commandline
 """
+CALLER = 0
 def readData(client):
-    while 1:
-        try:
-            val = f_input(">")
-            send(val, client)
-            if val == "{quit}":
-                server_output("disconnecting...")
-                disconnect(client)
-                break
-        except KeyboardInterrupt:
-            try:
-                send("{quit}", client)
-                disconnect(client)
-            except:
-                pass
+    global CALLER
+    CALLER = client
+    while TUI:
+        if data_input_handler("") == -1:
             break
-    server_output("disconnected")
+    if TUI:
+        server_output("disconnected")
     
+"""
+send data from input to socket
+"""
+def data_input_handler( msg):
+    try:
+        if TUI:
+            msg = ui.f_input(">")
+        if msg == "{quit}":
+            server_output("disconnecting...")
+            send("SYS{quit}", CALLER)
+            disconnect(CALLER)
+            return -1
+        print("gona send it anyway")
+        send("MSG"+msg, CALLER)
+        
+    except KeyboardInterrupt:
+        try:
+            send("SYS{quit}", CALLER)
+            disconnect(CALLER)
+        except:
+            pass
+        return -1
+    send(msg, CALLER)
 """
 main thread, sets client to calling or recieving
 """
 while 1:
     try:
-        choice = f_input("what to do? 1=connect, 2=listen, 3=die")
+        choice = ui.f_input("what to do? 1=connect, 2=listen, 3=die")
         if choice == "1":
-            target=0
+            target = 0
             connect(target)
         elif choice == "2":
             SERVER.bind(ADDR)
