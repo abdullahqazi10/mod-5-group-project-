@@ -12,8 +12,12 @@ ADDR = (HOST, PORT)
 SERVER = socket(AF_INET, SOCK_STREAM)
 SERVER.bind(ADDR)
 
+"""
+allows for 5 people to connect
+Sends the received socket to handle_client
+to multithread it
+"""
 def accept_incoming_connections():
-    """Sets up handling for incoming clients."""
     while True:
         client, client_address = SERVER.accept()
         print("%s:%s has connected." % client_address)
@@ -22,11 +26,16 @@ def accept_incoming_connections():
         global client_list
         client_list.append(client)
 
+"""
+Connects caller to target in connect()
+allows caller to stop connecting
+connect() will multithread receiving the messages
+  from the target
+handle_client() will receive the messages from the
+  caller
+"""
 def handle_client(client):  # Takes client socket as argument.
     try:
-        """Handles a single client connection."""
-        #successfull connection
-        #connect to the requested host
         target = socket(AF_INET, SOCK_STREAM)
         if connect(client, target) == -1:
             print("stopped exetution by client")
@@ -40,7 +49,7 @@ def handle_client(client):  # Takes client socket as argument.
     
     while True:
         msg = client.recv(BUFSIZ)
-        if msg != bytes("{quit}", "utf8"):
+        if msg != bytes("{quit}", "utf8") and str(msg) != "b''":
             try:
                 print("caller " + str(msg))
                 send_to( msg, target)
@@ -48,14 +57,28 @@ def handle_client(client):  # Takes client socket as argument.
                 send_to(bytes("error", "utf8"), client)
                 print(e)
         else:
-            send_to(bytes("{quit}", "utf8"), target)
-            client.close()
+            try:
+                send_to(bytes("SYS{quit}", "utf8"), target)
+                client.close()
+                client_list.remove(client)
+            except:
+                print("disconnection is a bit messy")
+                break
             break
 
+"""
+send msg on socket
+"""
 def send_to( msg, socket):
     socket.send(msg)
 
-def input_destination(client):
+"""
+send messages to caller to get the destination
+  IP address and port number
+allows the caller to stop connecting
+returns ADDR
+"""
+def input_destination( client):
     request = 'SYSplease enter destination IP or next server ip'
     client.send(bytes(request, "utf8"))
     ipadd = client.recv(BUFSIZ).decode("utf8")
@@ -68,6 +91,13 @@ def input_destination(client):
     print("connect to  " + ipadd + ":" + str(portadd))
     return (ipadd, portadd)
 
+"""
+Connects caller to target:
+requests destination from caller using input_destination
+starts new thread to receive messages from target
+if target is unreachable, send message to caller and
+  request destination again
+"""
 def connect( caller, target):
     while 1:
         try:
@@ -83,35 +113,53 @@ def connect( caller, target):
             print(e)
             send_to(bytes("network unreachable", "utf8"), caller)
 
-
+"""
+listens to the socket of target
+sends all messages immediately to caller
+on connection failure, send {quit} messaget to
+  caller
+"""
 def receive(target, caller):
-    """Handles receiving of messages."""
     while True:
         try:
-            #Receive messages from other and send to caller
             msg = target.recv(BUFSIZ)
-            if msg.decode("utf8") == "{quit}" or str(msg) == "b''":
+            if str(msg) == "b'SYS{quit}'" or str(msg) == "b''":
                 print("connection to target failed")
-                target.close()
                 client_list.remove(target)
+                if caller in client_list:
+                    send_to( bytes("SYS{quit}", "utf8"), caller)
+                    caller.close()
+                    client_list.remove(caller)
+                break
             print("target " + str(msg))
-            send_to( msg, caller)
+            if caller in client_list:
+                send_to( msg, caller)
         except OSError as e:  # Possibly client has left the chat.
             print(e)
             break
 
+"""
+stop the server, stop listening to port
+stop all active connections
+"""
 def shutdown():
     print("server shutdown")
     SERVER.close()
     for sock in client_list:
         sock.close()
-    
 
+"""
+main function
+"""
 if __name__ == "__main__":
     SERVER.listen(5)  # Listens for 5 connections at max.
     print("Waiting for connection...")
     start_new_thread(accept_incoming_connections, ())
 
+"""
+do nothing until all threads are stopped
+on shutdown (^C) shut down server correctly
+"""
 while 1:
     try:
         pass
