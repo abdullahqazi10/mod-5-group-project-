@@ -2,55 +2,52 @@
 from socket import AF_INET, socket, SOCK_STREAM
 from _thread import *
 import sys
+from view.ViewTUI import *
 
 HOST = ''
 PORT = 33000
 BUFSIZ = 1024
 ADDR = (HOST, PORT)
 SERVER = socket(AF_INET, SOCK_STREAM)
-address = 0
-deact = 0
 
-output_file = open("output.h264", 'wb')
-
+"""
+handle messages starting with 'SYS'
+"""
 def server_output( msg):
-    print(msg)
+    f_output_server(msg)
 
-def append_file( msg):
-    output_file.write(msg)
-    output_file.flush()
+"""
+handle chat messages
+"""  
+def client_output( msg):
+    f_output_client(msg)
 
+"""
+listen to certain port for 1 connection
+"""
 def accept_con( ):
     #allows for exactly one connection
     server_output("listening")
     while True:
-        global address, caller
         client, client_address = SERVER.accept()
         server_output("%s:%s has connected." % client_address)
         client.send(bytes("hello", "utf8"))
-        address = client_address
-        # start_new_thread( handle_client, (client, ))
         handle_client(client)
         break
 
-""" start reading from connection and reading from (cmd) input"""
+"""
+start reading from connection (different thread)
+  and reading from (cmd)input
+"""
 def handle_client(client):
-    #listens to connection in parallel thread
-    start_new_thread(readData, (client, ))
     #reads input
+    start_new_thread(readData, (client, ))
+    #listens to connection in parallel thread
     receive(client)
 
-def file_reader( target):
-    f = open('output.h264','rb')
-    print('Sending...')
-    l = f.read(1024)
-    while (l):
-        print 'Sending...'
-        target.send(l)
-        l = f.read(1024)
-    f.close()
-
-""" start listening to socket indefinitely, untill quit or empty"""
+"""
+start listening to socket indefinitely, untill quit or empty
+"""
 def receive( socket):
     while True:
         try:
@@ -59,35 +56,40 @@ def receive( socket):
                 msg = msg.decode("utf8")
                 server_output(msg[3:])
                 if (msg ==  "" or msg == "SYS{quit}"):
-                    server_output("other disconnected")
+                    server_output("other disconnected, ^C to return to menu")
                     disconnect(socket)
                     break
             elif str(msg)[:5] == "b'MSG'":
                 #server_output(msg)
                 pass
             else:
-                append_file(msg)
+                #append_file(msg)
+                if (msg != "{quit}"):
+                    client_output(msg)
         except OSError as e:  # Possibly other has left the chat.
             server_output("receive(): disconnected error")
             print(e)
             break
-    output_file.close()
+            
+    sys.exit()
 
-""" send message on socket"""
+"""
+send message on socket
+"""
 def send( msg, socket):
     socket.send(bytes(msg, "utf8"))
-    if msg == "{quit}":
-        socket.close()
 
 def disconnect( socket):
     socket.close()
 
-""" connect to target IP, keeps going till connected"""
+"""
+connect to target IP, keeps going till connected
+"""
 def connect(target):
     going = 1
     while going:
-        HOST = input('Enter server IP: ')
-        PORT = input('Enter server port: ')
+        HOST = f_input('Enter server IP: ')
+        PORT = f_input('Enter server port: ')
         if not PORT:
             PORT = 33000  # Default value.
         else:
@@ -109,32 +111,33 @@ def connect(target):
         going = 0
         readData(target)
 
-""" read imput from commandline"""
+"""
+read imput from commandline
+"""
 def readData(client):
-  if 0:
     while 1:
         try:
-            val = input(">")
+            val = f_input(">")
             send(val, client)
             if val == "{quit}":
-                global deact
-                deact=1
                 server_output("disconnecting...")
                 disconnect(client)
                 break
         except KeyboardInterrupt:
-            send("{quit}", client)
-            disconnect(client)
+            try:
+                send("{quit}", client)
+                disconnect(client)
+            except:
+                pass
             break
     server_output("disconnected")
-    sys.exit()
-  else:
-    file_reader(client)
     
-""" main thread, sets client to calling or recieving"""
+"""
+main thread, sets client to calling or recieving
+"""
 while 1:
     try:
-        choice = input("what to do? 1=connect, 2=listen, 3=die")
+        choice = f_input("what to do? 1=connect, 2=listen, 3=die")
         if choice == "1":
             target=0
             connect(target)
@@ -144,9 +147,14 @@ while 1:
             # start_new_thread( accept_con, ())
             accept_con()
         elif choice == "3":
+            sys.exit()
             break
     except KeyboardInterrupt:
         server_output("Shutting down")
-        sys.exit()
+        break
+
+"""
+do nothing until all threads are finished
+"""
 while 1:
     pass
