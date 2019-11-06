@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import *
 import socket
 import pdb
-import vlc
 import socket
 import time
 import subprocess
@@ -29,7 +28,12 @@ frame.place(relx=0.5, rely=0.1, relwidth=0.75, relheight=0.1, anchor='n')
 portentry = tk.Entry(frame, font=40, text='Enter port number')
 portentry.place(relwidth=0.65, relheight=1)
 
-
+def server_msg(msg):
+    #v.set(v.get()+"Server:"+ msg +"\n")
+    textfield.config(state=NORMAL)
+    textfield.insert(END, "Server: " + msg + "\n", 'bluecolor')
+    textfield.see(END)
+    textfield.config(state=DISABLED)
 
 # instruction = tk.Text(frame, state=DISABLED)
 # instruction.place(relx=0.15, rely=0.01,relwidth=0.2, relheight=0.05)
@@ -65,7 +69,7 @@ scroll.pack(side=RIGHT, fill=Y)
 
 textfield.place(relwidth=1, relheight=1)
 # textfield.insert("end","Enter port number in the connect field!\n")
-v.set(v.get()+"Enter Ip number in the connect field!\n")
+server_msg("enter Ip number in the connect field!\n")
 
 
 buttond=tk.Button(frame, text="Disconnect", font=40, bg= 'red', command= lambda: disconnectb())
@@ -93,12 +97,7 @@ def video(data):
     player.stdin.write(data)
 
 
-def server_msg(msg):
-    #v.set(v.get()+"Server:"+ msg +"\n")
-    textfield.config(state=NORMAL)
-    textfield.insert(END, "Server: " + msg + "\n", 'bluecolor')
-    textfield.see(END)
-    textfield.config(state=DISABLED)
+
 
 def sconnect():
     global port, ip
@@ -106,11 +105,11 @@ def sconnect():
     if(ip==-1):
         ip=portentry.get()
         portentry.delete(0,'end')
-        v.set(v.get()+"Input the port address\n" )
+        server_msg("Input the port address\n" )
     else:
         port=int(portentry.get())
         portentry.delete(0,'end')
-        v.set(v.get()+"Wait for instrcution from server\n" )
+        server_msg("Wait for instrcution from server\n" )
 
         if(c.connect2((ip,port))!=-1):
             pass
