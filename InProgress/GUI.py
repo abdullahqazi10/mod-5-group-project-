@@ -8,7 +8,7 @@ import time
 import subprocess
 import sys
 import Client as c
-
+from _thread import *
 
 
 HEIGHT = 800
@@ -17,8 +17,9 @@ WIDTH = 800
 root = tk.Tk()  # root window to place everything into
 port =-1
 ip=-1
-cmdline = ['mplayer', '-fps', '25',  '1024', '-']
-player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
+# cmdline = ['mplayer', '-fps', '25',  '1024', '-']
+# player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
+player=0
 canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH, bg='#00AFF0')
 canvas.pack()
 
@@ -66,7 +67,7 @@ buttond=tk.Button(frame, text="Disconnect", font=40, bg= 'red', command= lambda:
 buttond.pack(side=RIGHT)
 
 def opendisplay():
-
+    global player
     # cmdline = ['vlc', '--demux', 'h264', '-']
     cmdline = ['mplayer', '-fps', '25',  '1024', '-']
     player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
@@ -79,6 +80,7 @@ def send():
     c.send(msg)
 
 def video(data):
+    global player
     player.stdin.write(data)
 
 
@@ -107,13 +109,19 @@ def sconnect():
 
 
 def listen():
-    c.accept_con()
+    start_new_thread(c.accept_con,())
+    receive("Listening.")
+
+def stopPlayer():
+    global player
+    player.terminate()
 
 def disconnectb():  #when disconnect ic clicked
     port=-1
     ip=-1
     print("Closing connection")
-    s.close()
+    c.disconnect2()
+    stopPlayer()
     print("Client disconnected")
 
 root.mainloop()  # run function

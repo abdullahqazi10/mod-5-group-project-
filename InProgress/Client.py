@@ -108,6 +108,7 @@ def send( msg):#replaced socket with caller
 
 def disconnect( socket):
     socket.close()
+    GUI.stopPlayer()
 
 """
 connect to target IP, keeps going till connected
@@ -183,42 +184,57 @@ def data_input_handler( msg):
             msg = ui.f_input(">")
         if msg == "{quit}":
             server_output("disconnecting...")
-            send("SYS{quit}", CALLER)
+            send("SYS{quit}")
             disconnect(CALLER)
             return -1
         print("gona send it anyway")
-        send("MSG"+msg, CALLER)
+        send("MSG"+msg)
 
     except KeyboardInterrupt:
         try:
-            send("SYS{quit}", CALLER)
+            send("SYS{quit}")
             disconnect(CALLER)
         except:
             pass
         return -1
-    send(msg, CALLER)
+    send(msg)
 
 def record(client):
+    global CALLER
     if cameraAvailable:
-        print("recording")
-        connection=CALLER.makefile('wb')
+        try:
+            print("recording")
+            connection=CALLER.makefile('wb')
 
 
-        camera=picamera.PiCamera()
+            camera=picamera.PiCamera()
 
-        camera.resolution = (640, 480)
-        camera.framerate = 24
-            # a=open("a", 'w+')
-        camera.start_preview()
-        time.sleep(2)
-        camera.start_recording(connection,format='h264')
-        while True:
-            camera.wait_recording(30)
-        camera.stop_recording()
+            camera.resolution = (640, 480)
+            camera.framerate = 24
+                # a=open("a", 'w+')
+            camera.start_preview()
+            time.sleep(2)
+            camera.start_recording(connection,format='h264')
+            while True:
+                camera.wait_recording(30)
+            camera.stop_recording()
+        finally:
+            camera.close()
     else:
         client_output("Camera could not be started")
         return -1
 
+
+def disconnect2():
+    global SERVER,CALLER
+    try:
+        if CALLER !=0:
+            CALLER.close()
+            SERVER.close()
+            GUI.receive("Disconnected.")
+            sys.exit()
+    except:
+        GUI.receive("Was not connected.")
 """
 main thread, sets client to calling or recieving
 """
