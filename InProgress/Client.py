@@ -230,11 +230,13 @@ def disconnect2():
     try:
         if CALLER !=0:
             CALLER.close()
+        if SERVER != 0:
             SERVER.close()
-            GUI.receive("Disconnected.")
-            sys.exit()
-    except:
+        GUI.receive("Disconnected.")
+        sys.exit()
+    except Exception as e:
         GUI.receive("Was not connected.")
+        print(e)
 """
 main thread, sets client to calling or recieving
 """
