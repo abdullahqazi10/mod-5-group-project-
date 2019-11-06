@@ -55,12 +55,7 @@ buttonc= tk.Button(frame, text="Connect", font=40, bg='green', command= lambda: 
 buttonc.pack(side=RIGHT)
 v = StringVar()
 
-textfield = Text(message_frame, height=50, width=90, state=DISABLED)
-scroll=Scrollbar(message_frame)
-scroll.config(command=textfield.yview)
-textfield.configure(yscrollcommand=scroll.set)
-textfield.pack(side=LEFT)
-scroll.pack(side=RIGHT, fill=Y)
+textfield=tk.Label(message_frame, font=40,textvariable=v )
 
 
 textfield.place(relwidth=1, relheight=1)
@@ -78,11 +73,7 @@ def opendisplay():
     player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
 
 def receive(msg):
-    #v.set(v.get()+msg+"\n")
-    textfield.config(state=NORMAL)
-    textfield.insert(END, msg+"\n", 'greencolor')
-    textfield.see(END)
-    textfield.config(state=DISABLED)
+    v.set(v.get()+msg+"\n")
 
 def send():
     msg=textentry.get()
@@ -94,11 +85,8 @@ def video(data):
 
 
 def server_msg(msg):
-    #v.set(v.get()+"Server:"+ msg +"\n")
-    textfield.config(state=NORMAL)
-    textfield.insert(END, "Server: " + msg + "\n", 'bluecolor')
-    textfield.see(END)
-    textfield.config(state=DISABLED)
+
+    v.set(v.get()+"Server:"+ msg +"\n")
 
 def sconnect():
     global port, ip
