@@ -4,6 +4,8 @@ from _thread import *
 import sys
 # import view.ViewTUI as ui
 import GUI
+import time
+
 
 TUI = 0
 HOST = ''
@@ -23,6 +25,13 @@ handle messages starting with 'MSG'
 """
 def client_output( msg):
     GUI.receive(msg)
+
+try:
+    import picamera
+    cameraAvailable=True
+except ModuleNotFoundError:
+
+    cameraAvailable=False
 
 """
 listen to certain port for 1 connection
@@ -161,6 +170,9 @@ def readData(client):
             break
     if TUI:
         server_output("disconnected")
+    else:
+
+        start_new_thread(record, (client, ))
 
 """
 send data from input to socket
@@ -187,20 +199,25 @@ def data_input_handler( msg):
     send(msg, CALLER)
 
 def record(client):
+    if cameraAvailable:
+        print("recording")
+        connection=CALLER.makefile('wb')
 
-    print("recording")
-    connection=CALLER.makefile('wb')
-    camera=picamera.PiCamera()
-    # try:
-    camera.resolution = (640, 480)
-    camera.framerate = 24
-        # a=open("a", 'w+')
-    camera.start_preview()
-    time.sleep(2)
-    camera.start_recording(connection,format='h264')
-    while True:
-        camera.wait_recording(30)
-    camera.stop_recording()
+
+        camera=picamera.PiCamera()
+
+        camera.resolution = (640, 480)
+        camera.framerate = 24
+            # a=open("a", 'w+')
+        camera.start_preview()
+        time.sleep(2)
+        camera.start_recording(connection,format='h264')
+        while True:
+            camera.wait_recording(30)
+        camera.stop_recording()
+    else:
+        client_output("Camera could not be started")
+        return -1
 
 """
 main thread, sets client to calling or recieving

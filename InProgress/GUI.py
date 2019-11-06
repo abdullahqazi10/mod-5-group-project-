@@ -59,7 +59,7 @@ textfield=tk.Label(message_frame, font=40,textvariable=v )
 
 textfield.place(relwidth=1, relheight=1)
 # textfield.insert("end","Enter port number in the connect field!\n")
-v.set(v.get()+"Enter port number in the connect field!\n")
+v.set(v.get()+"Enter Ip number in the connect field!\n")
 
 
 buttond=tk.Button(frame, text="Disconnect", font=40, bg= 'red', command= lambda: disconnectb())
@@ -91,11 +91,11 @@ def sconnect():
     input=portentry.get()
     if(ip==-1):
         ip=portentry.get()
-
+        portentry.delete(0,'end')
         v.set(v.get()+"Input the port address\n" )
     else:
         port=int(portentry.get())
-
+        portentry.delete(0,'end')
         v.set(v.get()+"Wait for instrcution from server\n" )
 
         if(c.connect2((ip,port))!=-1):
