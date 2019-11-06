@@ -53,13 +53,18 @@ def handle_client(client):
 
     readData(client)
 
+
 """
 start listening to socket indefinitely, untill quit or empty
 """
 def receive( socket):
+    GUI.opendisplay()
+
+
     while True:
         try:
             msg = socket.recv(BUFSIZ)
+
             if str(msg)[:5] == "b'SYS" or str(msg) == "b''":
                 msg = msg.decode("utf8")
                 server_output(msg[3:])
@@ -67,17 +72,17 @@ def receive( socket):
                     server_output("other disconnected, ^C to return to menu")
                     disconnect(socket)
                     break
-            elif msg.decode("utf8")[:3] == "MSG":
+            elif  str(msg)[:5] == "b'MSG":
                 client_output(msg.decode("utf8")[3:])
                 pass
             else:
-                #append_file(msg)
-                if (str(msg) != "b'{quit}'"):
-                    client_output(msg.decode("utf8"))
-                else:
-                    server_output("other disconnected")
-                    disconnect(socket)
-                    break
+                GUI.video(msg)
+                # if (str(msg) != "b'{quit}'"):
+                #     client_output(msg.decode("utf8"))
+                # else:
+                #     server_output("other disconnected")
+                #     disconnect(socket)
+                #     break
         except OSError as e:  # Possibly other has left the chat.
             server_output("receive(): disconnected error")
             print(e)
@@ -88,8 +93,9 @@ def receive( socket):
 """
 send message on socket
 """
-def send( msg, socket):
-    socket.send(bytes(msg, "utf8"))
+def send( msg):#replaced socket with caller
+
+    CALLER.send(bytes(msg, "utf8"))
 
 def disconnect( socket):
     socket.close()
@@ -140,7 +146,7 @@ def connect2(addr):
         print(e)
         return -1
     readData(target)
-    start_new_thread(receive, (target, ))
+    # start_new_thread(receive, (target, ))
     return 1
 
 """
@@ -179,6 +185,23 @@ def data_input_handler( msg):
             pass
         return -1
     send(msg, CALLER)
+
+def record(client):
+
+    print("recording")
+    connection=CALLER.makefile('wb')
+    camera=picamera.PiCamera()
+    # try:
+    camera.resolution = (640, 480)
+    camera.framerate = 24
+        # a=open("a", 'w+')
+    camera.start_preview()
+    time.sleep(2)
+    camera.start_recording(connection,format='h264')
+    while True:
+        camera.wait_recording(30)
+    camera.stop_recording()
+
 """
 main thread, sets client to calling or recieving
 """

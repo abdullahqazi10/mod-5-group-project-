@@ -13,11 +13,12 @@ import Client as c
 
 HEIGHT = 800
 WIDTH = 800
-player=0
+# player=0
 root = tk.Tk()  # root window to place everything into
 port =-1
 ip=-1
-
+cmdline = ['mplayer', '-fps', '25',  '1024', '-']
+player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
 canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH, bg='#00AFF0')
 canvas.pack()
 
@@ -65,6 +66,8 @@ buttond=tk.Button(frame, text="Disconnect", font=40, bg= 'red', command= lambda:
 buttond.pack(side=RIGHT)
 
 def opendisplay():
+
+    # cmdline = ['vlc', '--demux', 'h264', '-']
     cmdline = ['mplayer', '-fps', '25',  '1024', '-']
     player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
 
@@ -91,11 +94,11 @@ def sconnect():
 
         v.set(v.get()+"Input the port address\n" )
     else:
-        port=portentry.get()
+        port=int(portentry.get())
 
         v.set(v.get()+"Wait for instrcution from server\n" )
 
-        if(c.connect2((ip, port))!=-1):
+        if(c.connect2((ip,port))!=-1):
             pass
         else:
             port=-1
@@ -107,7 +110,7 @@ def listen():
     c.accept_con()
 
 def disconnectb():  #when disconnect ic clicked
-    port=0
+    port=-1
     ip=-1
     print("Closing connection")
     s.close()
