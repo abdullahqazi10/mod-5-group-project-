@@ -2,13 +2,13 @@ import tkinter as tk
 from tkinter import *
 import socket
 import pdb
-import vlc
+#import vlc
 import socket
 import time
 import subprocess
 import sys
 import Client as c
-from _thread import *
+
 
 
 HEIGHT = 800
@@ -17,9 +17,8 @@ WIDTH = 800
 root = tk.Tk()  # root window to place everything into
 port =-1
 ip=-1
-# cmdline = ['mplayer', '-fps', '25',  '1024', '-']
-# player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
-player=0
+cmdline = ['mplayer', '-fps', '25',  '1024', '-']
+player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
 canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH, bg='#00AFF0')
 canvas.pack()
 
@@ -55,6 +54,7 @@ buttonc= tk.Button(frame, text="Connect", font=40, bg='green', command= lambda: 
 buttonc.pack(side=RIGHT)
 v = StringVar()
 
+#textfield=tk.Label(message_frame, font=40,textvariable=v )
 textfield = Text(message_frame, height=50, width=90, state=DISABLED)
 scroll=Scrollbar(message_frame)
 scroll.config(command=textfield.yview)
@@ -72,7 +72,7 @@ buttond=tk.Button(frame, text="Disconnect", font=40, bg= 'red', command= lambda:
 buttond.pack(side=RIGHT)
 
 def opendisplay():
-    global player
+
     # cmdline = ['vlc', '--demux', 'h264', '-']
     cmdline = ['mplayer', '-fps', '25',  '1024', '-']
     player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
@@ -89,7 +89,6 @@ def send():
     c.send(msg)
 
 def video(data):
-    global player
     player.stdin.write(data)
 
 
@@ -121,19 +120,13 @@ def sconnect():
 
 
 def listen():
-    start_new_thread(c.accept_con,())
-    receive("Listening.")
-
-def stopPlayer():
-    global player
-    player.terminate()
+    c.accept_con()
 
 def disconnectb():  #when disconnect ic clicked
     port=-1
     ip=-1
     print("Closing connection")
-    c.disconnect2()
-    stopPlayer()
+    s.close()
     print("Client disconnected")
 
 root.mainloop()  # run function
